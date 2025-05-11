@@ -18,15 +18,18 @@ export const authOptions: AuthOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   debug: true,
+  pages: {
+    error: '/auth/error',
+  },
   logger: {
-    error(code, metadata) {
-      console.error('NextAuth ERROR', code, metadata)
+    error(code, ...rest) {
+      console.error('NEXTAUTH ERROR', code, ...rest);
     },
-    warn(code) {
-      console.warn('NextAuth WARN', code)
+    warn(code, ...rest) {
+      console.error('NEXTAUTH WARN', code, ...rest);
     },
-    debug(code, metadata) {
-      console.debug('NextAuth DEBUG', code, metadata)
+    debug(code, ...rest) {
+      console.error('NEXTAUTH DEBUG', code, ...rest);
     },
   },
   events: {
@@ -39,7 +42,21 @@ export const authOptions: AuthOptions = {
       console.log('EVENT signIn:', user, 'isNewUser?', isNewUser)
     },
     // Tu peux ajouter signOut, updateUser, linkAccount, session si besoin
-  }
+  },
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      console.error('CALLBACK signIn:', { user, account, profile });
+      return true;
+    },
+    async session({ session, token, user }) {
+      console.error('CALLBACK session:', { session, token, user });
+      return session;
+    },
+    async jwt({ token, user, account }) {
+      console.error('CALLBACK jwt:', { token, user, account });
+      return token;
+    },
+  },
 }
 
 export default NextAuth(authOptions)
