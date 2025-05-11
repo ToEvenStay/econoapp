@@ -2,8 +2,12 @@ import { useEffect, useCallback, useState } from 'react';
 
 // @ts-ignore
 
-export function useTheme() {
-  const [darkMode, setDarkMode] = useState(true);
+export function useTheme(): {
+  darkMode: boolean;
+  toggleTheme: () => void;
+  mounted: boolean;
+} {
+  const [darkMode, setDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const setTheme = useCallback((theme: 'light' | 'dark') => {
@@ -20,8 +24,8 @@ export function useTheme() {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
-  }, [setTheme]);
+    setDarkMode(prev => !prev);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -34,15 +38,4 @@ export function useTheme() {
   }, [setTheme]);
 
   return { darkMode, toggleTheme, mounted };
-}
-
-// TypeScript module declaration pour useTheme
-// Ceci permet à TypeScript de reconnaître le module lors de l'import
-
-declare module '../lib/useTheme' {
-  export function useTheme(): {
-    darkMode: boolean;
-    toggleTheme: () => void;
-    mounted: boolean;
-  };
 } 
