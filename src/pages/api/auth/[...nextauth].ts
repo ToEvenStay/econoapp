@@ -24,6 +24,11 @@ const authOptions = {
     warn(code: string, ...message: any[])   { console.warn("NextAuth warn:",  code, ...message); },
     debug(code: string, ...message: any[])  { console.debug("NextAuth dbg:",   code, ...message); },
   },
+  events: {
+    async error(error: any) {
+      console.error("NextAuth EVENT error:", error);
+    }
+  },
 };
 
 export { authOptions };
