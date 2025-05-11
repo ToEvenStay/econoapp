@@ -19,6 +19,11 @@ const authOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   debug: true,
+  logger: {
+    error(code: string, ...message: any[])  { console.error("NextAuth error:", code, ...message); },
+    warn(code: string, ...message: any[])   { console.warn("NextAuth warn:",  code, ...message); },
+    debug(code: string, ...message: any[])  { console.debug("NextAuth dbg:",   code, ...message); },
+  },
 };
 
 export { authOptions };
