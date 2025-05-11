@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import useSWR, { mutate } from 'swr';
 import HeaderLayout from '../components/HeaderLayout';
 import { Tab } from '@headlessui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faUser, faUsers, faTruck, faUserCog } from '@fortawesome/free-solid-svg-icons';
+import { useRouter } from "next/router";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
+
   const [activeTab, setActiveTab] = useState<'users' | 'services' | 'fournisseurs' | 'options' | 'superadmin'>('users');
   const [serviceName, setServiceName] = useState('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -31,20 +40,24 @@ export default function AdminPage() {
   // Recherche et filtre fournisseurs
   const [fournisseurSearch, setFournisseurSearch] = useState('');
   const [fournisseurTypeFilter, setFournisseurTypeFilter] = useState('TOUS');
-  const filteredFournisseurs = (fournisseurs || []).filter((f: any) => {
-    const matchType = fournisseurTypeFilter === 'TOUS' || f.type === fournisseurTypeFilter;
-    const q = fournisseurSearch.toLowerCase();
-    const matchSearch =
-      f.name.toLowerCase().includes(q) ||
-      (f.email && f.email.toLowerCase().includes(q)) ||
-      (f.phone && f.phone.toLowerCase().includes(q)) ||
-      (f.address && f.address.toLowerCase().includes(q));
-    return matchType && matchSearch;
-  });
+  const filteredFournisseurs = Array.isArray(fournisseurs)
+    ? fournisseurs.filter((f: any) => {
+        const matchType = fournisseurTypeFilter === 'TOUS' || f.type === fournisseurTypeFilter;
+        const q = fournisseurSearch.toLowerCase();
+        const matchSearch =
+          f.name.toLowerCase().includes(q) ||
+          (f.email && f.email.toLowerCase().includes(q)) ||
+          (f.phone && f.phone.toLowerCase().includes(q)) ||
+          (f.address && f.address.toLowerCase().includes(q));
+        return matchType && matchSearch;
+      })
+    : [];
 
   // Recherche live services
   const [serviceSearch, setServiceSearch] = useState('');
-  const filteredServices = (services || []).filter((s: any) => s.name.toLowerCase().includes(serviceSearch.toLowerCase()));
+  const filteredServices = Array.isArray(services)
+    ? services.filter((s: any) => s.name.toLowerCase().includes(serviceSearch.toLowerCase()))
+    : [];
 
   // Edition utilisateur
   const [editUser, setEditUser] = useState<any>(null);
@@ -54,13 +67,15 @@ export default function AdminPage() {
   // Utilisateurs : recherche live et modal d'ajout
   const [userSearch, setUserSearch] = useState('');
   const [showUserModal, setShowUserModal] = useState(false);
-  const filteredUsers = (users || []).filter((u: any) => {
-    const q = userSearch.toLowerCase();
-    return (
-      (u.name && u.name.toLowerCase().includes(q)) ||
-      (u.email && u.email.toLowerCase().includes(q))
-    );
-  });
+  const filteredUsers = Array.isArray(users)
+    ? users.filter((u: any) => {
+        const q = userSearch.toLowerCase();
+        return (
+          (u.name && u.name.toLowerCase().includes(q)) ||
+          (u.email && u.email.toLowerCase().includes(q))
+        );
+      })
+    : [];
 
   // Ajout d'un état pour la modal d'ajout de service
   const [showServiceModal, setShowServiceModal] = useState(false);
@@ -75,7 +90,9 @@ export default function AdminPage() {
   const [statusSearch, setStatusSearch] = useState('');
   const [optionsSearch, setOptionsSearch] = useState('');
   const { data: conformiteStatus, mutate: mutateConformite, isLoading: loadingConformite } = useSWR('/api/conformite-status', (url) => fetch(url).then(r => r.json()));
-  const filteredStatus = (conformiteStatus || []).filter((s: any) => s.label.toLowerCase().includes(statusSearch.toLowerCase()));
+  const filteredStatus = Array.isArray(conformiteStatus)
+    ? conformiteStatus.filter((s: any) => s.label.toLowerCase().includes(statusSearch.toLowerCase()))
+    : [];
   const filteredOptions = [
     { key: 'statut', label: 'Statuts de conformité' },
     { key: 'export', label: 'Export' },

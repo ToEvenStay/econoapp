@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import useSWR from 'swr';
 import HeaderLayout from '../../components/HeaderLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faBoxOpen, faClipboardList, faCheckCircle, faArchive, faTimes, faEdit, faTruck, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Dialog, Transition } from '@headlessui/react';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -30,6 +32,19 @@ const CATEGORIES = [
 export default function OrdersIncomingPage() {
   const { data: orders = [], isLoading } = useSWR('/api/orders', fetcher);
   const [search, setSearch] = useState('');
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Chargement...</div>;
+  }
+
   // Recherche live sur fournisseur, n° BC, service, produit
   const filteredOrders = useMemo(() => {
     const q = search.toLowerCase();

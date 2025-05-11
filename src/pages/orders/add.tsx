@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/router';
 import HeaderLayout from '../../components/HeaderLayout';
+import { useSession } from "next-auth/react";
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function AddOrderPage() {
+  const { status } = useSession();
   const router = useRouter();
   const { data: fournisseurs = [] } = useSWR('/api/fournisseurs', fetcher);
   const { data: services = [] } = useSWR('/api/services', fetcher);
@@ -19,6 +21,16 @@ export default function AddOrderPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Chargement...</div>;
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));

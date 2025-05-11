@@ -1,16 +1,26 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import HeaderLayout from '../../components/HeaderLayout';
 import { Filters } from '../../components/Filters';
 import { LivraisonCard } from '../../components/LivraisonCard';
 import { useLivraisons } from '../../hooks/useLivraisons';
 import useSWR, { mutate } from 'swr';
 import { Dialog, Transition } from '@headlessui/react';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
 interface Fournisseur { id: string; name: string; }
 interface Status { id: string; label: string; }
 
 export default function ControleLivraisonsPage() {
-  // Dates par défaut (2 dernières semaines)
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
+
   const today = useMemo(() => new Date(), []);
   const twoWeeksAgo = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 13); return d; }, []);
   const defaultDates = useMemo(() => ({
@@ -34,10 +44,8 @@ export default function ControleLivraisonsPage() {
 
   console.log('Nombre de livraisons chargées :', livraisons.length);
 
-  // Ajout d'un état pour la recherche
   const [search, setSearch] = useState('');
 
-  // Correction du filtrage par recherche, conformité et service
   const filteredLivraisons = useMemo(() => {
     console.log('filteredLivraisons recalculé');
     let result = livraisons;
@@ -66,12 +74,14 @@ export default function ControleLivraisonsPage() {
   }, [livraisons, search, filters.conformite, filters.serviceId]);
 
   const grouped = useMemo(() => {
-    return filteredLivraisons.reduce((acc: any, l: any) => {
-      const date = l.dateLivraison?.slice(0, 10);
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(l);
-      return acc;
-    }, {});
+    return Array.isArray(filteredLivraisons)
+      ? filteredLivraisons.reduce((acc: any, l: any) => {
+          const date = l.dateLivraison?.slice(0, 10);
+          if (!acc[date]) acc[date] = [];
+          acc[date].push(l);
+          return acc;
+        }, {})
+      : {};
   }, [filteredLivraisons]);
   const dates = useMemo(() => Object.keys(grouped).sort((a, b) => b.localeCompare(a)), [grouped]);
 
@@ -87,7 +97,6 @@ export default function ControleLivraisonsPage() {
     window.location.href = '/delivery/add';
   }, []);
 
-  // Suppression
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -104,11 +113,14 @@ export default function ControleLivraisonsPage() {
     setTimeout(() => setFeedback(null), 2000);
   };
 
+  if (status === "loading") {
+    return <div>Chargement...</div>;
+  }
+
   return (
     <HeaderLayout>
       <div className="min-h-screen bg-gray-100 flex justify-center items-start py-8">
         <div className="relative">
-          {/* Box de filtres (desktop seulement) */}
           <div className="hidden md:block absolute right-full mr-6 top-0 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 z-10">
             <Filters
               filters={filters}
@@ -121,9 +133,7 @@ export default function ControleLivraisonsPage() {
               hideSearchAndAdd
             />
           </div>
-          {/* Box principale, inchangée */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 w-full max-w-3xl">
-            {/* Titre, recherche et bouton dans la box blanche */}
             <h1 className="text-3xl font-extrabold text-center text-orange-500 mb-8 tracking-tight">Contrôle des livraisons</h1>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <input
@@ -181,7 +191,6 @@ export default function ControleLivraisonsPage() {
           </div>
         </div>
       </div>
-      {/* Modal de confirmation de suppression */}
       <Transition.Root show={modalOpen} as={React.Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setModalOpen(false)}>
           <Transition.Child

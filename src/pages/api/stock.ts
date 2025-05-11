@@ -2,6 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from './auth/[...nextauth]';
 
 // 1) Définissez le schéma Zod
 const StockSchema = z.object({
@@ -11,6 +13,11 @@ const StockSchema = z.object({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+
   try {
     if (req.method === 'GET') {
       // 2) GET → lister tous les stockItems
@@ -27,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Allow', ['GET','POST']);
     return res.status(405).end();
   } catch (err: any) {
-    // 5) Gestion d’erreur
+    // 5) Gestion d'erreur
     return res.status(400).json({ error: err.message });
   }
 }

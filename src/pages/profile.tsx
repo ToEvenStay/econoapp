@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import HeaderLayout from '../components/HeaderLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
 
   if (status === 'loading') return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Chargement...</div>;
   if (!session) return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Non connecté</div>;

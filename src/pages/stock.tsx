@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import HeaderLayout from '../components/HeaderLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faPlus, faBoxOpen } from '@fortawesome/free-solid-svg-icons';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function StockPage() {
-  // États pour les filtres
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
+
+  // TOUS LES HOOKS DOIVENT ÊTRE APPELÉS AVANT TOUT RETURN CONDITIONNEL
   const [filters, setFilters] = useState({
     query: '',
     service: 'tout',
@@ -34,6 +45,11 @@ export default function StockPage() {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
+
+  // AFFICHAGE CONDITIONNEL APRÈS TOUS LES HOOKS
+  if (status === "loading") {
+    return <div>Chargement...</div>;
+  }
 
   return (
     <HeaderLayout>
@@ -63,7 +79,7 @@ export default function StockPage() {
               className="rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
             >
               <option value="tout">Tous les services</option>
-              {services && services.map((service: any) => (
+              {Array.isArray(services) && services.map((service: any) => (
                 <option key={service.name} value={service.name}>{service.name}</option>
               ))}
             </select>

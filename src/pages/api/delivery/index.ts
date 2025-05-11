@@ -1,7 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+
   try {
     // Bloc spécifique rapportBC EN PREMIER !
     if (req.method === 'GET' && req.query.rapportBC) {

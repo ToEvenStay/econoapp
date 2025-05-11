@@ -3,6 +3,8 @@ import { prisma } from '../../lib/prisma';
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
+import { getServerSession } from 'next-auth';
+import { authOptions } from './auth/[...nextauth]';
 
 export const config = {
   api: {
@@ -24,6 +26,10 @@ async function parseForm(req: NextApiRequest) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
   if (req.method === 'GET') {
     // Liste tous les fournisseurs
     const fournisseurs = await prisma.fournisseur.findMany();

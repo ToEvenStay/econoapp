@@ -5,10 +5,12 @@ import HeaderLayout from '@/components/HeaderLayout';
 import { Dialog, Transition } from '@headlessui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useSession } from "next-auth/react";
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function EditDeliveryPage() {
+  const { status } = useSession();
   const router = useRouter();
   const { id } = router.query;
   const { data: fournisseurs = [] } = useSWR('/api/fournisseurs', fetcher);
@@ -21,6 +23,12 @@ export default function EditDeliveryPage() {
   // Pour la suppression d'article
   const [articleToDelete, setArticleToDelete] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
 
   useEffect(() => {
     if (livraison) {
@@ -124,6 +132,10 @@ export default function EditDeliveryPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (status === "loading") {
+    return <div>Chargement...</div>;
   }
 
   if (isLoading || !form) {

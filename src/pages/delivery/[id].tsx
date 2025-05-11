@@ -1,14 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/router';
 import HeaderLayout from '@/components/HeaderLayout';
+import { useSession } from "next-auth/react";
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function DeliveryDetailPage() {
+  const { status } = useSession();
   const router = useRouter();
   const { id } = router.query;
   const { data: livraison, isLoading } = useSWR(id ? `/api/delivery/${id}` : null, fetcher);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Chargement...</div>;
+  }
 
   // Chercher le bon de commande lié à cette livraison (par numBC)
   const linkedOrder = useSWR(livraison?.numBC ? `/api/orders?numBC=${encodeURIComponent(livraison.numBC)}` : null, fetcher).data?.[0];
