@@ -1,0 +1,132 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String   @id @map("_id") @default(auto()) @db.ObjectId
+  email          String   @unique
+  name           String?
+  emailVerified  DateTime?
+  sessions       Session[]
+  accounts       Account[]
+  access         String[] @default([])
+}
+
+model StockItem {
+  id       String  @id @map("_id") @default(auto()) @db.ObjectId
+  name     String
+  quantity Int
+  unit     String
+}
+
+model Order {
+  id            String      @id @map("_id") @default(auto()) @db.ObjectId
+  numBC         String      @unique
+  items         String[]
+  fournisseurId String
+  fournisseur   Fournisseur @relation(fields: [fournisseurId], references: [id])
+  serviceId     String
+  service       Service     @relation(fields: [serviceId], references: [id])
+  createdAt     DateTime    @default(now())
+  fulfilled     Boolean     @default(false)
+  destination   String?
+}
+
+model Service {
+  id        String   @id @map("_id") @default(auto()) @db.ObjectId
+  name      String   @unique
+  livraisons Livraison[]
+  orders     Order[]
+}
+
+model VerificationToken {
+  id         String   @id @map("_id") @default(auto()) @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Session {
+  id           String   @id @map("_id") @default(auto()) @db.ObjectId
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  expires      DateTime
+}
+
+model Account {
+  id                 String  @id @map("_id") @default(auto()) @db.ObjectId
+  userId             String
+  user               User    @relation(fields: [userId], references: [id])
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  @@unique([provider, providerAccountId])
+}
+
+enum TypeFournisseur {
+  ALIMENTAIRE
+  NON_ALIMENTAIRE
+  LES_DEUX
+}
+
+model Fournisseur {
+  id      String         @id @map("_id") @default(auto()) @db.ObjectId
+  name    String
+  email   String?
+  phone   String?
+  address String?
+  type    TypeFournisseur
+  logo    String? // chemin du logo dans /public/uploads/fournisseurs/
+  livraisons Livraison[]
+  orders   Order[]
+}
+
+model ConformiteStatus {
+  id    String @id @map("_id") @default(auto()) @db.ObjectId
+  label String @unique
+}
+
+model Livraison {
+  id            String            @id @map("_id") @default(auto()) @db.ObjectId
+  fournisseur   Fournisseur       @relation(fields: [fournisseurId], references: [id])
+  fournisseurId String
+  service       Service           @relation(fields: [serviceId], references: [id])
+  serviceId     String
+  dateLivraison DateTime
+  heureArrivee  String
+  numBC         String?
+  numBL         String?
+  type          String
+  tempFrais     Float?
+  tempCongele   Float?
+  conformite    String
+  remarques     String?
+  articles      ArticleLivraison[]
+  createdAt     DateTime          @default(now())
+}
+
+model ArticleLivraison {
+  id           String     @id @map("_id") @default(auto()) @db.ObjectId
+  livraison    Livraison  @relation(fields: [livraisonId], references: [id])
+  livraisonId  String
+  nom          String
+  quantite     Float
+  reference    String
+  conformite   String
+  remarques    String?
+}
