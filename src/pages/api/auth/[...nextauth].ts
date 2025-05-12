@@ -11,10 +11,10 @@ export const authOptions: AuthOptions = {
       clientId:     process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    EmailProvider({
-      server: process.env.EMAIL_SERVER!,
-      from:   process.env.EMAIL_FROM!,
-    }),
+    // EmailProvider({
+    //   server: process.env.EMAIL_SERVER!,
+    //   from:   process.env.EMAIL_FROM!,
+    // }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   debug: true,
@@ -45,6 +45,33 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Lier automatiquement Google aux comptes Email existants
+      if (account?.provider === 'google') {
+        const existing = await prisma.user.findUnique({
+          where: { email: user.email! }
+        });
+        if (existing) {
+          await prisma.account.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId!
+              }
+            },
+            update: {},
+            create: {
+              userId: existing.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId!,
+              access_token: account.access_token,
+              // ajoute les autres champs nécessaires si besoin
+            }
+          });
+          return true;
+        }
+      }
+      // ...log et retour pour debug
       console.error('CALLBACK signIn:', { user, account, profile });
       return true;
     },
