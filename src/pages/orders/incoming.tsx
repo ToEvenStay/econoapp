@@ -4,8 +4,8 @@ import HeaderLayout from '../../components/HeaderLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faBoxOpen, faClipboardList, faCheckCircle, faArchive, faTimes, faEdit, faTruck, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Dialog, Transition } from '@headlessui/react';
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { useAuth } from '../../lib/useAuth';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -29,21 +29,18 @@ const CATEGORIES = [
   { key: 'anciens', label: 'Anciens bons' },
 ];
 
-export default function OrdersIncomingPage() {
-  const { data: orders = [], isLoading } = useSWR('/api/orders', fetcher);
-  const [search, setSearch] = useState('');
-  const { status } = useSession();
+export default function IncomingOrdersPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
+    if (!isAuthenticated) {
+      router.push('/login');
     }
-  }, [status, router]);
+  }, [isAuthenticated, router]);
 
-  if (status === "loading") {
-    return <div>Chargement...</div>;
-  }
+  const { data: orders = [], isLoading } = useSWR('/api/orders', fetcher);
+  const [search, setSearch] = useState('');
 
   // Recherche live sur fournisseur, n° BC, service, produit
   const filteredOrders = useMemo(() => {

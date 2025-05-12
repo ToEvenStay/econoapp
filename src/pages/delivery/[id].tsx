@@ -2,32 +2,28 @@ import React, { useEffect } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/router';
 import HeaderLayout from '@/components/HeaderLayout';
-import { useSession } from "next-auth/react";
+import { isAuthenticatedClient } from '../../lib/auth';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function DeliveryDetailPage() {
-  const { status } = useSession();
   const router = useRouter();
-  const { id } = router.query;
-  const { data: livraison, isLoading } = useSWR(id ? `/api/delivery/${id}` : null, fetcher);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
+    if (!isAuthenticatedClient()) {
+      router.push('/login');
     }
-  }, [status, router]);
+  }, [router]);
 
-  if (status === "loading") {
-    return <div>Chargement...</div>;
-  }
-
-  // Chercher le bon de commande lié à cette livraison (par numBC)
-  const linkedOrder = useSWR(livraison?.numBC ? `/api/orders?numBC=${encodeURIComponent(livraison.numBC)}` : null, fetcher).data?.[0];
+  const { id } = router.query;
+  const { data: livraison, isLoading } = useSWR(id ? `/api/delivery/${id}` : null, fetcher);
 
   if (isLoading || !livraison) {
     return <HeaderLayout><div className="max-w-2xl mx-auto px-4 py-8 text-center text-gray-400">Chargement…</div></HeaderLayout>;
   }
+
+  // Chercher le bon de commande lié à cette livraison (par numBC)
+  const linkedOrder = useSWR(livraison?.numBC ? `/api/orders?numBC=${encodeURIComponent(livraison.numBC)}` : null, fetcher).data?.[0];
 
   return (
     <HeaderLayout>

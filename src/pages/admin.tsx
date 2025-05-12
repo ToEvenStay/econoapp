@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
 import useSWR, { mutate } from 'swr';
 import HeaderLayout from '../components/HeaderLayout';
 import { Tab } from '@headlessui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faUser, faUsers, faTruck, faUserCog } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from "next/router";
+import { useAuth } from '../lib/useAuth';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function AdminPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
+    if (!isAuthenticated) {
+      router.push('/login');
     }
-  }, [status, router]);
+  }, [isAuthenticated, router]);
 
   const [activeTab, setActiveTab] = useState<'users' | 'services' | 'fournisseurs' | 'options' | 'superadmin'>('users');
   const [serviceName, setServiceName] = useState('');
@@ -120,13 +120,6 @@ export default function AdminPage() {
     a.remove();
     window.URL.revokeObjectURL(url);
   };
-
-  // Redirection si non connecté
-  if (status === 'loading') return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Chargement...</div>;
-  if (!session) {
-    signIn();
-    return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Redirection...</div>;
-  }
 
   // Ajout d'un service
   const handleAddService = async (e: React.FormEvent) => {

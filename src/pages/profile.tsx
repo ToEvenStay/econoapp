@@ -1,24 +1,23 @@
 import React, { useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import HeaderLayout from '../components/HeaderLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../lib/useAuth';
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
+    if (!isAuthenticated) {
+      router.push('/login');
     }
-  }, [status, router]);
+  }, [isAuthenticated, router]);
 
-  if (status === 'loading') return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Chargement...</div>;
-  if (!session) return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Non connecté</div>;
+  if (!user) return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Non connecté</div>;
 
-  const avatar = session.user?.name?.[0]?.toUpperCase() || session.user?.email?.[0]?.toUpperCase() || '?';
+  const avatar = user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?';
 
   return (
     <HeaderLayout>
@@ -30,11 +29,11 @@ export default function ProfilePage() {
               {avatar}
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-xl font-semibold text-gray-900 dark:text-white">{session.user?.name || '—'}</span>
-              <span className="text-gray-500 dark:text-gray-300">{session.user?.email}</span>
+              <span className="text-xl font-semibold text-gray-900 dark:text-white">{user.name || '—'}</span>
+              <span className="text-gray-500 dark:text-gray-300">{user.email}</span>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={logout}
               className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold shadow transition"
             >
               Se déconnecter

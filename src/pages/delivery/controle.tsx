@@ -5,21 +5,21 @@ import { LivraisonCard } from '../../components/LivraisonCard';
 import { useLivraisons } from '../../hooks/useLivraisons';
 import useSWR, { mutate } from 'swr';
 import { Dialog, Transition } from '@headlessui/react';
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { useAuth } from '../../lib/useAuth';
 
 interface Fournisseur { id: string; name: string; }
 interface Status { id: string; label: string; }
 
 export default function ControleLivraisonsPage() {
-  const { status } = useSession();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
+    if (!isAuthenticated) {
+      router.push('/login');
     }
-  }, [status, router]);
+  }, [isAuthenticated, router]);
 
   const today = useMemo(() => new Date(), []);
   const twoWeeksAgo = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 13); return d; }, []);
@@ -112,10 +112,6 @@ export default function ControleLivraisonsPage() {
     setFeedback('Livraison supprimée !');
     setTimeout(() => setFeedback(null), 2000);
   };
-
-  if (status === "loading") {
-    return <div>Chargement...</div>;
-  }
 
   return (
     <HeaderLayout>

@@ -1,7 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
+import { verifyTokenServer } from '../../lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const user = verifyTokenServer(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
   if (req.method === 'GET') {
     // Liste tous les statuts
     const status = await prisma.conformiteStatus.findMany();

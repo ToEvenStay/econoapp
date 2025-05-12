@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '../lib/useAuth';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faBell, faHome, faBoxOpen, faPeopleCarry, faShoppingCart, faClipboardList, faTruckLoading, faUserCog, faUserCircle, faMoon, faSun, faShoppingBasket, faTruck } from '@fortawesome/free-solid-svg-icons';
 
 // Nécessite d'avoir installé @fortawesome/react-fontawesome et @fortawesome/free-solid-svg-icons
 
 export default function HeaderLayout({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
+  const { user, isAuthenticated, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const isAdmin = true;
-  const username = session?.user?.name || session?.user?.email || '';
+  const username = user?.name || user?.email || '';
 
   // Avatar minimal (initiale)
   const avatar = username ? username[0].toUpperCase() : '?';
@@ -95,7 +95,7 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
             <div className="absolute left-24 bottom-8 min-w-[12rem] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow animate-fade-in z-50 p-4 flex flex-col gap-2">
               <span className="font-semibold text-gray-900 dark:text-white mb-2">{username}</span>
               <Link href="/profile" className="block px-4 py-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Mon Profil</Link>
-              <button onClick={() => signOut()} className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Déconnexion</button>
+              <button onClick={() => logout()} className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Déconnexion</button>
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
+import { verifyTokenServer } from '../../lib/auth';
 import PDFDocument from 'pdfkit';
 
 export const config = {
@@ -9,6 +10,10 @@ export const config = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const user = verifyTokenServer(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
   const { type } = req.query;
   let data: any[] = [];
   let title = '';

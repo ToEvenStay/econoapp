@@ -14,6 +14,7 @@ model User {
   sessions       Session[]
   accounts       Account[]
   access         String[] @default([])
+  password       String   // Ajouté pour login custom
 }
 
 model StockItem {

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { useRouter } from 'next/router';
 import HeaderLayout from '../../../components/HeaderLayout';
-import { useSession } from "next-auth/react";
+import { isAuthenticatedClient } from '../../../lib/auth';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function EditOrderPage() {
-  const { status } = useSession();
   const router = useRouter();
   const { id } = router.query;
   const { data: fournisseurs = [] } = useSWR('/api/fournisseurs', fetcher);
@@ -27,10 +26,10 @@ export default function EditOrderPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
+    if (!isAuthenticatedClient()) {
+      router.push('/login');
     }
-  }, [status, router]);
+  }, [router]);
 
   useEffect(() => {
     if (order) {

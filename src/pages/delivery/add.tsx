@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import HeaderLayout from '../../components/HeaderLayout';
 import { Listbox, Dialog, Transition } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, DocumentTextIcon, ChatBubbleLeftRightIcon, ArrowTrendingDownIcon, ArrowTrendingUpIcon, TrashIcon, CubeIcon, PlusIcon } from '@heroicons/react/24/solid';
-import { useSession } from "next-auth/react";
+import { isAuthenticatedClient } from '../../lib/auth';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -147,8 +147,14 @@ function ArticleCard({ article, index, onChange, onRemove }: {
 }
 
 export default function AddDeliveryPage() {
-  const { status } = useSession();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticatedClient()) {
+      router.push('/login');
+    }
+  }, [router]);
+
   const { data: fournisseurs = [] } = useSWR('/api/fournisseurs', fetcher);
   const { data: services = [] } = useSWR('/api/services', fetcher);
   const { data: orders = [], error: ordersError } = useSWR('/api/orders', fetcher, {
@@ -391,12 +397,6 @@ export default function AddDeliveryPage() {
   });
 
   const SelectorIcon = ChevronUpDownIcon;
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
-    }
-  }, [status, router]);
 
   if (status === "loading") {
     return <div>Chargement...</div>;

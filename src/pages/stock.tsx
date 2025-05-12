@@ -3,20 +3,19 @@ import useSWR from 'swr';
 import HeaderLayout from '../components/HeaderLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faPlus, faBoxOpen } from '@fortawesome/free-solid-svg-icons';
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { isAuthenticatedClient } from '../lib/auth';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function StockPage() {
-  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/api/auth/signin");
+    if (!isAuthenticatedClient()) {
+      router.push('/login');
     }
-  }, [status, router]);
+  }, [router]);
 
   // TOUS LES HOOKS DOIVENT ÊTRE APPELÉS AVANT TOUT RETURN CONDITIONNEL
   const [filters, setFilters] = useState({
@@ -47,7 +46,7 @@ export default function StockPage() {
   };
 
   // AFFICHAGE CONDITIONNEL APRÈS TOUS LES HOOKS
-  if (status === "loading") {
+  if (loadingProducts) {
     return <div>Chargement...</div>;
   }
 

@@ -2,8 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from './auth/[...nextauth]';
+import { verifyTokenServer } from '../../lib/auth';
 
 // 1) Définissez le schéma Zod
 const StockSchema = z.object({
@@ -13,8 +12,8 @@ const StockSchema = z.object({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
+  const user = verifyTokenServer(req);
+  if (!user) {
     return res.status(401).json({ error: 'Non authentifié' });
   }
 
