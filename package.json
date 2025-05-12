@@ -19,6 +19,7 @@
     "@types/formidable": "^3.4.5",
     "formidable": "^3.5.4",
     "headless": "^1.2.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "15.3.2",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.1",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20",
     "@types/pdfkit": "^0.13.9",
     "@types/react": "^19",
