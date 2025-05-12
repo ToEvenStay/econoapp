@@ -45,6 +45,7 @@ export default function IncomingOrdersPage() {
   // Recherche live sur fournisseur, n° BC, service, produit
   const filteredOrders = useMemo(() => {
     const q = search.toLowerCase();
+    if (!Array.isArray(orders)) return [];
     return orders.filter((order: any) => {
       // Recherche sur fournisseur, service, numBC, produits (nom, ref, qté)
       const items = Array.isArray(order.items)
