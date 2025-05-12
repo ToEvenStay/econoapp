@@ -97,10 +97,6 @@ export default function EditOrderPage() {
     }
   }
 
-  if (status === "loading") {
-    return <div>Chargement...</div>;
-  }
-
   return (
     <HeaderLayout>
       <div className="max-w-2xl mx-auto px-4 py-10">
