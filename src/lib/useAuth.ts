@@ -5,16 +5,20 @@ import { useRouter } from 'next/router';
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      setIsAuthenticated(isAuthenticatedClient());
-      setUser(getUserFromToken(token));
-    } else {
-      setIsAuthenticated(false);
-      setUser(null);
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        setIsAuthenticated(isAuthenticatedClient());
+        setUser(getUserFromToken(token));
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+      setIsReady(true);
     }
   }, [router.asPath]);
 
@@ -30,5 +34,5 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  return { isAuthenticated, user, login, logout };
+  return { isAuthenticated, user, login, logout, isReady };
 } 

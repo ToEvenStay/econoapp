@@ -7,17 +7,19 @@ import { useAuth } from '../lib/useAuth';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isReady } = useAuth();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isReady && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isReady, isAuthenticated, router]);
+
+  if (!isReady) return null;
+
+  const avatar = user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
 
   if (!user) return <div className="min-h-screen flex items-center justify-center text-gray-400 bg-gray-900">Non connecté</div>;
-
-  const avatar = user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?';
 
   return (
     <HeaderLayout>

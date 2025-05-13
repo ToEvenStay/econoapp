@@ -31,18 +31,29 @@ const CATEGORIES = [
 
 export default function IncomingOrdersPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
-
+  const { isAuthenticated, isReady } = useAuth();
   const { data: orders = [], isLoading } = useSWR('/api/orders', fetcher);
   const [search, setSearch] = useState('');
 
-  // Recherche live sur fournisseur, n° BC, service, produit
+  // Filtres de date pour anciens bons (par défaut sur 1 mois)
+  const today = new Date();
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(today.getMonth() - 1);
+  const [dateDebutAncien, setDateDebutAncien] = useState(oneMonthAgo.toISOString().slice(0, 10));
+  const [dateFinAncien, setDateFinAncien] = useState(today.toISOString().slice(0, 10));
+
+  // État pour la modale de détail BC
+  const [orderDetail, setOrderDetail] = useState<any | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  // Menu d'onglets
+  const [tab, setTab] = useState('a_recevoir');
+
+  useEffect(() => {
+    if (isReady && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isReady, isAuthenticated, router]);
+
   const filteredOrders = useMemo(() => {
     const q = search.toLowerCase();
     if (!Array.isArray(orders)) return [];
@@ -63,22 +74,13 @@ export default function IncomingOrdersPage() {
     });
   }, [orders, search]);
 
-  // Nouvelle logique : requête groupée pour toutes les livraisons liées
   const numBCs = filteredOrders.map((order: any) => order.numBC).filter(Boolean);
   const { data: linkedLivraisons = [] } = useSWR(
     numBCs.length ? `/api/delivery?numBCs=${encodeURIComponent(JSON.stringify(numBCs))}` : null,
     fetcher
   );
-  function getLinkedLivraison(numBC: string) {
-    return linkedLivraisons.find((l: any) => l.numBC === numBC);
-  }
 
-  // Filtres de date pour anciens bons (par défaut sur 1 mois)
-  const today = new Date();
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(today.getMonth() - 1);
-  const [dateDebutAncien, setDateDebutAncien] = useState(oneMonthAgo.toISOString().slice(0, 10));
-  const [dateFinAncien, setDateFinAncien] = useState(today.toISOString().slice(0, 10));
+  if (!isReady) return null;
 
   // Filtrage par catégorie
   function isAncien(order: any, livraison: any) {
@@ -101,7 +103,7 @@ export default function IncomingOrdersPage() {
 
   // Filtrage anciens bons par période
   const commandesAnciennes = filteredOrders.filter((order: any) => {
-    const livraison = getLinkedLivraison(order.numBC);
+    const livraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
     if (!livraison) return false;
     const dateLivraison = livraison.dateLivraison ? new Date(livraison.dateLivraison) : null;
     if (!dateLivraison) return false;
@@ -110,25 +112,21 @@ export default function IncomingOrdersPage() {
     return isAncien(order, livraison);
   });
   const commandesLitige = filteredOrders.filter((order: any) => {
-    const livraison = getLinkedLivraison(order.numBC);
+    const livraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
     return isLitigeStrict(livraison);
   });
   const commandesBackOrder = filteredOrders.filter((order: any) => {
-    const livraison = getLinkedLivraison(order.numBC);
+    const livraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
     return isBackOrderStrict(livraison);
   });
   const commandesNonControle = filteredOrders.filter((order: any) => {
-    const livraison = getLinkedLivraison(order.numBC);
+    const livraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
     return isNonControleStrict(livraison);
   });
   const commandesARecevoir = filteredOrders.filter((order: any) => {
-    const livraison = getLinkedLivraison(order.numBC);
+    const livraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
     return !livraison || livraison.conformite !== 'conforme';
   });
-
-  // État pour la modale de détail BC
-  const [orderDetail, setOrderDetail] = useState<any | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
   // Fonction pour ouvrir la modale
   function openOrderDetail(order: any) {
@@ -139,9 +137,6 @@ export default function IncomingOrdersPage() {
     setModalOpen(false);
     setOrderDetail(null);
   }
-
-  // Menu d'onglets
-  const [tab, setTab] = useState('a_recevoir');
 
   return (
     <HeaderLayout>
@@ -193,7 +188,7 @@ export default function IncomingOrdersPage() {
             {commandesARecevoir.length === 0 ? (
               <div className="col-span-2 text-center py-12 text-gray-400 italic">Aucune commande à recevoir</div>
             ) : commandesARecevoir.map((order: any) => {
-              const linkedLivraison = getLinkedLivraison(order.numBC);
+              const linkedLivraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
               // Couleur de statut
               let borderColor = 'border-orange-300';
               if (linkedLivraison?.conformite === 'litige') borderColor = 'border-red-400';
@@ -275,7 +270,7 @@ export default function IncomingOrdersPage() {
               {commandesAnciennes.length === 0 ? (
                 <div className="col-span-2 text-center py-12 text-gray-400 italic">Aucun ancien bon de commande</div>
               ) : commandesAnciennes.map((order: any) => {
-                const linkedLivraison = getLinkedLivraison(order.numBC);
+                const linkedLivraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
                 // Couleur de statut
                 let borderColor = 'border-orange-300';
                 let badge = '';
@@ -346,7 +341,7 @@ export default function IncomingOrdersPage() {
             {commandesLitige.length === 0 ? (
               <div className="col-span-2 text-center py-12 text-gray-400 italic">Aucune commande en litige</div>
             ) : commandesLitige.map((order: any) => {
-              const linkedLivraison = getLinkedLivraison(order.numBC);
+              const linkedLivraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
               let borderColor = 'border-red-400';
               let badge = 'Litige';
               if (linkedLivraison?.conformite === 'back_order') { borderColor = 'border-yellow-400'; badge = 'Back order'; }
@@ -409,7 +404,7 @@ export default function IncomingOrdersPage() {
             {commandesBackOrder.length === 0 ? (
               <div className="col-span-2 text-center py-12 text-gray-400 italic">Aucune commande en back order</div>
             ) : commandesBackOrder.map((order: any) => {
-              const linkedLivraison = getLinkedLivraison(order.numBC);
+              const linkedLivraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
               let borderColor = 'border-yellow-400';
               let badge = 'Back order';
               if (linkedLivraison?.conformite === 'litige') { borderColor = 'border-red-400'; badge = 'Litige'; }
@@ -472,7 +467,7 @@ export default function IncomingOrdersPage() {
             {commandesNonControle.length === 0 ? (
               <div className="col-span-2 text-center py-12 text-gray-400 italic">Aucune commande non contrôlée</div>
             ) : commandesNonControle.map((order: any) => {
-              const linkedLivraison = getLinkedLivraison(order.numBC);
+              const linkedLivraison = linkedLivraisons.find((l: any) => l.numBC === order.numBC);
               let borderColor = 'border-gray-400';
               let badge = 'Non contrôlé';
               if (linkedLivraison?.conformite === 'litige') { borderColor = 'border-red-400'; badge = 'Litige'; }

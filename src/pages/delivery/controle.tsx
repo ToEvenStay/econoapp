@@ -13,13 +13,7 @@ interface Status { id: string; label: string; }
 
 export default function ControleLivraisonsPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+  const { isAuthenticated, isReady } = useAuth();
 
   const today = useMemo(() => new Date(), []);
   const twoWeeksAgo = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 13); return d; }, []);
@@ -42,9 +36,17 @@ export default function ControleLivraisonsPage() {
 
   const { livraisons, isLoading, linkedOrders } = useLivraisons(filters);
 
-  console.log('Nombre de livraisons chargées :', livraisons.length);
-
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (isReady && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isReady, isAuthenticated, router]);
+
+  if (!isReady) return null;
+
+  console.log('Nombre de livraisons chargées :', livraisons.length);
 
   const filteredLivraisons = useMemo(() => {
     console.log('filteredLivraisons recalculé');

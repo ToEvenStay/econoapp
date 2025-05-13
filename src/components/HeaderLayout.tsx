@@ -7,7 +7,7 @@ import { faBars, faBell, faHome, faBoxOpen, faPeopleCarry, faShoppingCart, faCli
 // Nécessite d'avoir installé @fortawesome/react-fontawesome et @fortawesome/free-solid-svg-icons
 
 export default function HeaderLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isReady } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const isAdmin = true;
@@ -15,6 +15,8 @@ export default function HeaderLayout({ children }: { children: React.ReactNode }
 
   // Avatar minimal (initiale)
   const avatar = username ? username[0].toUpperCase() : '?';
+
+  if (!isReady) return null;
 
   return (
     <>

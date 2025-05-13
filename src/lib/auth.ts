@@ -7,8 +7,10 @@ export function isAuthenticatedClient() {
   const token = localStorage.getItem('token');
   if (!token) return false;
   try {
-    jwt.verify(token, JWT_SECRET);
-    return true;
+    const decoded: any = jwt.decode(token);
+    if (!decoded || !decoded.exp) return false;
+    // Vérifie que le token n'est pas expiré
+    return decoded.exp * 1000 > Date.now();
   } catch {
     return false;
   }

@@ -11,13 +11,7 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function AdminPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+  const { isAuthenticated, isReady } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'users' | 'services' | 'fournisseurs' | 'options' | 'superadmin'>('users');
   const [serviceName, setServiceName] = useState('');
@@ -283,6 +277,14 @@ export default function AdminPage() {
   const handleProtectedPageChange = (page: string, checked: boolean) => {
     setProtectedPages(checked ? [...protectedPages, page] : protectedPages.filter(p => p !== page));
   };
+
+  useEffect(() => {
+    if (isReady && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isReady, isAuthenticated, router]);
+
+  if (!isReady) return null;
 
   return (
     <HeaderLayout>
